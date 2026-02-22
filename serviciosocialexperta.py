@@ -1,29 +1,29 @@
 from experta import *
 
-# 1. Definimos los Hechos (Facts) que el sistema manejará
+# 1. Definimos los Hechos (Facts) que el sistema manejarï¿½
 class Alumno(Fact):
-    """Información sobre el estado del alumno."""
+    """Informaciï¿½n sobre el estado del alumno."""
     pass
 
 class SistemaServicioSocial(KnowledgeEngine):
     
-    # REGLA 1: Falta de créditos (Art. 146)
+    # REGLA 1: Falta de crÃ©ditos (Art. 146)
     @Rule(Alumno(porcentaje_creditos=L(70)))
     def creditos_insuficientes(self):
-        print("\n[!] RECHAZO (Art. 146): El alumno no alcanza el 70% de créditos requeridos.")
+        print("\n[!] RECHAZO (Art. 146): El alumno no alcanza el 70% de crï¿½ditos requeridos.")
 
-    # REGLA 2: Sin curso de inducción (Art. 148)
+    # REGLA 2: Sin curso de inducciï¿½n (Art. 148)
     @Rule(Alumno(induccion=False))
     def falta_induccion(self):
-        print("[!] REQUISITO (Art. 148-I): Falta acreditar el curso de inducción.")
+        print("[!] REQUISITO (Art. 148-I): Falta acreditar el curso de inducciï¿½n.")
 
-    # REGLA 3: Lugar no válido (Art. 126)
+    # REGLA 3: Lugar no vÃ¡lido (Art. 126)
     @Rule(Alumno(lugar_valido=False))
     def lugar_invalido(self):
-        print("[!] PROHIBIDO (Art. 126): El lugar elegido (privado/político) no es válido.")
+        print("[!] PROHIBIDO (Art. 126): El lugar elegido (privado/polï¿½tico) no es vï¿½lido.")
 
     # REGLA 4: Todo correcto (Elegibilidad)
-    # Se activa si el alumno tiene >= 70% créditos, inducción True y lugar válido True
+    # Se activa si el alumno tiene >= 70% crÃ©ditos, inducciÃ³n True y lugar vÃ¡lido True
     @Rule(Alumno(porcentaje_creditos=GE(70), 
                  induccion=True, 
                  lugar_valido=True))
@@ -31,21 +31,21 @@ class SistemaServicioSocial(KnowledgeEngine):
         print("\n" + "="*40)
         print("ESTADO: ALUMNO APTO PARA INICIAR.")
         print("="*40)
-        print("- Debe cumplir 500 horas en mínimo 6 meses.")
+        print("- Debe cumplir 500 horas en mÃ­nimo 6 meses.")
         print("- Registrar informes mensuales cada 100 horas.")
 
-# --- Lógica de Interfaz (Fuera del motor de inferencia) ---
+# --- Lï¿½gica de Interfaz (Fuera del motor de inferencia) ---
 
 def solicitar_datos():
     print("\n--- INGRESO DE DATOS DEL ALUMNO ---")
     nombre = input("Nombre: ")
     try:
-        total = float(input("Total créditos carrera: "))
-        aprobados = float(input("Créditos aprobados: "))
+        total = float(input("Total crÃ©ditos carrera: "))
+        aprobados = float(input("CrÃ©ditos aprobados: "))
         porc = (aprobados / total) * 100
         
-        induccion = input("¿Acreditó inducción? (s/n): ").lower() == 's'
-        lugar = input("¿Institución pública o social? (s/n): ").lower() == 's'
+        induccion = input("Â¿AcreditÃ³ inducciÃ³n? (s/n): ").lower() == 's'
+        lugar = input("Â¿InstituciÃ³n pÃºblica o social? (s/n): ").lower() == 's'
         
         return {
             "nombre": nombre,
@@ -54,7 +54,7 @@ def solicitar_datos():
             "lugar": lugar
         }
     except ZeroDivisionError:
-        print("Error: El total de créditos no puede ser 0.")
+        print("Error: El total de crï¿½ditos no puede ser 0.")
         return None
 
 if __name__ == "__main__":
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     while True:
         datos = solicitar_datos()
         if datos:
-            print(f"\nDIAGNÓSTICO PARA: {datos['nombre'].upper()}")
+            print(f"\nDIAGNï¿½STICO PARA: {datos['nombre'].upper()}")
             print(f"Avance actual: {datos['porc']:.2f}%")
             
             # Resetear el motor y cargar los hechos
@@ -77,5 +77,5 @@ if __name__ == "__main__":
             # Ejecutar el motor de inferencia
             engine.run()
             
-        if input("\n¿Evaluar otro? (s/n): ").lower() != 's':
+        if input("\nÂ¿Evaluar otro? (s/n): ").lower() != 's':
             break
