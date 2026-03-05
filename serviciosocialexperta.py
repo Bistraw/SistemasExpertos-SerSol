@@ -61,7 +61,7 @@ class Conclusion(Fact):
         
         return fact
     
-# 1. Definimos los Hechos (Facts) que el sistema manejar�
+# 1. Definimos los Hechos (Facts) que el sistema manejar
 class Alumno(Fact):
     """InformaciOn sobre el estado del alumno."""
     pass
