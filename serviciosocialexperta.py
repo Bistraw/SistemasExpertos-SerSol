@@ -27,6 +27,8 @@ import utils
 
 class GoalKind(Enum):
     CAN_ENROLL = 0
+    CAN_REGISTER_HOURS = 1
+    CAN_SUBMIT_REPORT = 2
 
 class Goal(Fact): 
     
@@ -61,16 +63,26 @@ class Conclusion(Fact):
         
         return fact
     
-# 1. Definimos los Hechos (Facts) que el sistema manejar�
+# 1. Definimos los Hechos (Facts) que el sistema maneja
 class Alumno(Fact):
-    """InformaciOn sobre el estado del alumno."""
+    """Información sobre el estado del alumno."""
+    pass
+
+class ProyectoServicio(Fact):
+    """Información del proyecto de servicio social."""
+    pass
+
+class ReporteServicio(Fact):
+    """Información sobre reportes de horas."""
     pass
 
 class SistemaServicioSocial(KnowledgeEngine):
 
     @DefFacts()
     def initial_facts(self):
-        yield Alumno()
+        # NO inicializar Alumno vacío - será proveído por la GUI/test
+        return
+        yield  # Generator vacío
 
     # prioridades definidas para el motor de inferencia
 
@@ -78,71 +90,135 @@ class SistemaServicioSocial(KnowledgeEngine):
     #  50 - posibly halting operations (conclusions)
     # 100 - general inferences 
 
-    # check for missing facts 
+    # NOTA: La interfaz GUI suministra todos los datos al motor
+    # No necesitamos fase de recolección aquí
 
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), NOT(Alumno(porcentaje_creditos=MATCH.pc)))
-    def unknown_student_credits(self):
-        self.declare(Missing.create(Alumno, "porcentaje_creditos", int, "cual es el porcentaje de créditos escolares que ha obtenido? : "))
-        self.halt()
+    # ════════════════════════════════════════════════════════════════════════════════════════
+    # FASE 2: VALIDAR CONDICIONES PREVIAS (Artículos 146-148)
+    # Prioridad ALTA (salience=100) para detener si alguna no se cumple
+    # ════════════════════════════════════════════════════════════════════════════════════════
 
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), NOT(Alumno(induccion=MATCH.i)))
-    def unknown_student_induccion(self):
-        self.declare(Missing.create(Alumno, "induccion", bool, "ha completado el curso de inducción? : "))
-        self.halt()
-
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), NOT(Alumno(lugar_valido=MATCH.lv)))
-    def unknown_student_lugar_valido(self):
-        self.declare(Missing.create(Alumno, "lugar_valido", bool, "planea realizar su servicio en una institución pública o social? : "))
-        self.halt()
-
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), NOT(Alumno(nombre=MATCH.n)))
-    def unknown_student_name(self):
-        self.declare(Missing.create(Alumno, "nombre", str, "cómo te llamas? : "))
-        self.halt()
-
-    # posible "halting" operations (conclusions)
-
-    # REGLA 1: Falta de créditos (Art. 146)
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(porcentaje_creditos=L(70)), salience=50)
-    def creditos_insuficientes(self):
-        self.declare(Conclusion(text="[!] RECHAZO (Art. 146): El alumno no alcanza el 70% de créditos requeridos."))
-        self.halt()
-
-    # REGLA 2: Sin curso de inducción (Art. 148)
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(induccion=False), salience=50)
-    def falta_induccion(self):
-        self.declare(Conclusion(text="[!] REQUISITO (Art. 148-I): Falta acreditar el curso de inducción."))
-        self.halt()
-
-    # REGLA 3: Lugar no válido (Art. 126)
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(lugar_valido=False))
-    def lugar_invalido(self):
-        self.declare(Conclusion(text="[!] PROHIBIDO (Art. 126): El lugar elegido (privado/político) no es válido."))
-        self.halt()
-
-    # REGLA 4: Todo correcto (Elegibilidad)
-    # Se activa si el alumno tiene >= 70% créditos, inducción True y lugar válido True
-    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(porcentaje_creditos=GE(70), 
-                induccion=True, 
-                lugar_valido=True))
-    def alumno_apto(self):
+    # Artículo 146: Mínimo 70% de créditos
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(porcentaje_creditos=P(lambda x: x < 70)), salience=100)
+    def rechazo_creditos_insuficientes(self):
         text = ""
-        text += "\n" + "="*40
-        text += "\n" + "ESTADO: ALUMNO APTO PARA INICIAR."
-        text += "\n" + "="*40
-        text += "\n" + "- Debe cumplir 500 horas en mínimo 6 meses."
-        text += "\n" + "- Registrar informes mensuales cada 100 horas."
+        text += "\n" + "="*60
+        text += "\n" + "✗ RECHAZO: CRÉDITOS INSUFICIENTES"
+        text += "\n" + "="*60
+        text += "\n" + "(Art. 146) Debes completar mínimo 70% de los créditos"
+        text += "\n" + "de tu plan de estudios antes de iniciar SS."
+        text += "\n\n" + "Acción: Continúa con tus cursos y vuelve después."
+        self.declare(Conclusion(text=text))
+        self.halt()
+
+    # Artículo 148-I: Curso de inducción obligatorio
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(induccion=False), salience=100)
+    def rechazo_sin_induccion(self):
+        text = ""
+        text += "\n" + "="*60
+        text += "\n" + "✗ REQUISITO NO CUMPLIDO: CURSO DE INDUCCIÓN"
+        text += "\n" + "="*60
+        text += "\n" + "(Art. 148-I) Debes acreditar el curso de inducción"
+        text += "\n" + "antes de iniciar tu servicio social."
+        text += "\n\n" + "Acción: Inscríbete en el próximo curso de inducción."
+        self.declare(Conclusion(text=text))
+        self.halt()
+
+    # Artículo 126: Institución válida (pública o civil sin fines de lucro)
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(lugar_valido=False), salience=100)
+    def rechazo_lugar_invalido(self):
+        text = ""
+        text += "\n" + "="*60
+        text += "\n" + "✗ PROHIBIDO: INSTITUCIÓN NO VÁLIDA"
+        text += "\n" + "="*60
+        text += "\n" + "(Art. 126) No se permite SS en empresas privadas"
+        text += "\n" + "ni en asociaciones partidistas/partidos políticos."
+        text += "\n\n" + "Acción: Elige una institución pública o civil válida."
+        self.declare(Conclusion(text=text))
+        self.halt()
+
+    # Institución debe ser pública o sin fines de lucro
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(institucion_publica=False), salience=100)
+    def rechazo_institucion_privada(self):
+        text = ""
+        text += "\n" + "="*60
+        text += "\n" + "✗ PROHIBIDO: INSTITUCIÓN PRIVADA"
+        text += "\n" + "="*60
+        text += "\n" + "(Art. 136) Solo instituciones públicas o asociaciones"
+        text += "\n" + "civiles sin fines de lucro pueden recibir prestadores."
+        text += "\n\n" + "Acción: Selecciona una institución pública o civil."
+        self.declare(Conclusion(text=text))
+        self.halt()
+
+    # Actividades válidas (no reciclaje, boteo, donativos)
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), Alumno(actividad_valida=False), salience=100)
+    def rechazo_actividad_no_valida(self):
+        text = ""
+        text += "\n" + "="*60
+        text += "\n" + "✗ PROHIBIDO: ACTIVIDAD NO VÁLIDA"
+        text += "\n" + "="*60
+        text += "\n" + "(Art. 147) NO se aceptan para SS:"
+        text += "\n  • Reciclaje"
+        text += "\n  • Boteo"
+        text += "\n  • Entrega de donativos económicos"
+        text += "\n\n" + "Acción: Propón una actividad que beneficie a"
+        text += "\n" + "grupos menos favorecidos (Art. 120)."
+        self.declare(Conclusion(text=text))
+        self.halt()
+
+    # ════════════════════════════════════════════════════════════════════════════════════════
+    # FASE 3: CONCLUSIÓN FINAL - TODO CUMPLE
+    # Se activa SOLO si TODAS las condiciones son correctas
+    # ════════════════════════════════════════════════════════════════════════════════════════
+
+    @Rule(Goal(kind=GoalKind.CAN_ENROLL), 
+          Alumno(porcentaje_creditos=GE(70), 
+                 induccion=True, 
+                 lugar_valido=True,
+                 institucion_publica=True,
+                 actividad_valida=True), 
+          salience=50)  # Menor prioridad que validaciones
+    def aprobado_iniciar_servicio(self):
+        text = ""
+        text += "\n" + "="*60
+        text += "\n" + "✓ ¡APROBADO! PUEDES INICIAR SERVICIO SOCIAL"
+        text += "\n" + "="*60
+        text += "\n\n" + "REQUISITOS CUMPLIDOS:"
+        text += "\n  ✓ Art. 146: 70% de créditos completados"
+        text += "\n  ✓ Art. 148-I: Curso de inducción acreditado"
+        text += "\n  ✓ Art. 126: Institución pública/civil válida"
+        text += "\n  ✓ Art. 147: Actividad de beneficio social"
+        text += "\n\n" + "OBLIGACIONES DURANTE EL SERVICIO (Art. 148):"
+        text += "\n  1. Cumplir 500 horas (Art. 148-III)"
+        text += "\n  2. Duración: mínimo 6 meses, máximo 2 años"
+        text += "\n  3. Reportes mensuales cada 100h (Art. 148-IV)"
+        text += "\n  4. Informe final dentro de 1 mes tras terminar"
+        text += "\n  5. No reportar informes fuera de plazo (Art. 153)"
+        text += "\n\n" + "SANCIONES POR INCUMPLIMIENTO:"
+        text += "\n  • Art. 151: Baja automática si incumples el proyecto"
+        text += "\n  • Art. 152: Puedes abandonar si cambian condiciones"
+        text += "\n  • Art. 153: Pierdes horas si reportas fuera de plazo"
+        text += "\n\n" + "CONSTANCIA DE LIBERACIÓN:"
+        text += "\n  El tutor te entregará la constancia cuando"
+        text += "\n  completes las 500 horas (Art. 150)."
         
         self.declare(Conclusion(text=text))
         self.halt()
 
-    def get_fact(self, fact_type : type):
 
+    def get_fact(self, fact_type : type):
         for i in self.facts:
             if isinstance(self.facts[i], fact_type):
                 return i, self.facts[i]
-
         return -1, None
+
+    def get_all_facts(self, fact_type : type):
+        """Retorna todos los facts de un tipo (no solo el primero)."""
+        results = []
+        for i in self.facts:
+            if isinstance(self.facts[i], fact_type):
+                results.append((i, self.facts[i]))
+        return results
 
 if __name__ == "__main__":
     engine = SistemaServicioSocial()
