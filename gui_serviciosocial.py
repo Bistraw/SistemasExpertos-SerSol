@@ -210,12 +210,47 @@ class App(tk.Tk):
         self.induccion_var = tk.StringVar(value="si")
         self._toggle(parent, self.induccion_var)
 
+<<<<<<< HEAD
         # ── Lugar ───────────────────────────────────────────────────────────
         self._section(parent, "Institución de Servicio")
         self._label(parent, "¿Realizará su servicio en una institución pública o social? (Art. 126)")
         self.lugar_var = tk.StringVar(value="si")
         self._toggle(parent, self.lugar_var)
 
+=======
+        # ── Semestre ────────────────────────────────────────────────────────
+        self._section(parent, "Situación Académica")
+        self._label(parent, "¿En qué semestre te encuentras?")
+        semestre_frame = tk.Frame(parent, bg=BG)
+        semestre_frame.pack(fill="x", padx=22, pady=(0, 4))
+        self.semestre_var = tk.IntVar(value=6)
+        for s in range(5, 11):
+            tk.Radiobutton(
+                semestre_frame, text=f"{s}to", variable=self.semestre_var, value=s,
+                font=("Segoe UI", 10), bg=CARD, fg=ACCENT,
+                activebackground=CARD, relief="flat", padx=10, pady=8,
+                cursor="hand2", indicatoron=False, width=4,
+                highlightthickness=1, highlightbackground=BORDER,
+            ).pack(side="left", padx=4)
+
+        # ── Lugar ────────────────────────────────────────────────────────
+        self._section(parent, "Institución de Servicio (Art. 126)")
+        self._label(parent, "¿Realizará su servicio en una institución pública o asociación civil?")
+        self.lugar_var = tk.StringVar(value="si")
+        self._toggle(parent, self.lugar_var)
+
+        # ── Tipo Institución ───────────────────────────────────────────
+        self._label(parent, "¿Es pública o sin fines de lucro? (No puede ser privada)")
+        self.institucion_publica_var = tk.StringVar(value="si")
+        self._toggle(parent, self.institucion_publica_var)
+
+        # ── Actividad Válida ───────────────────────────────────────────
+        self._section(parent, "Tipo de Actividad")
+        self._label(parent, "¿Es una actividad válida? (No: reciclaje, boteo, donativos)")
+        self.actividad_valida_var = tk.StringVar(value="si")
+        self._toggle(parent, self.actividad_valida_var)
+
+>>>>>>> 1f07aa5bcac2c8f3fa86ff018600598da850abac
         # ── Botones ─────────────────────────────────────────────────────────
         btns = tk.Frame(parent, bg=BG)
         btns.pack(fill="x", padx=22, pady=(22, 8))
@@ -336,6 +371,12 @@ class App(tk.Tk):
         creditos  = self.creditos_var.get()
         induccion = self.induccion_var.get() == "si"
         lugar     = self.lugar_var.get() == "si"
+<<<<<<< HEAD
+=======
+        semestre  = self.semestre_var.get()
+        institucion_publica = self.institucion_publica_var.get() == "si"
+        actividad_valida    = self.actividad_valida_var.get() == "si"
+>>>>>>> 1f07aa5bcac2c8f3fa86ff018600598da850abac
 
         # Respuestas pre-cargadas (mismo flujo que el loop de terminal)
         answers = {
@@ -343,11 +384,18 @@ class App(tk.Tk):
             "porcentaje_creditos": creditos,
             "induccion":           induccion,
             "lugar_valido":        lugar,
+<<<<<<< HEAD
+=======
+            "semestre":            semestre,
+            "institucion_publica": institucion_publica,
+            "actividad_valida":    actividad_valida,
+>>>>>>> 1f07aa5bcac2c8f3fa86ff018600598da850abac
         }
 
         engine = SistemaServicioSocial()
         engine.reset()
         engine.declare(Goal.create(GoalKind.CAN_ENROLL))
+<<<<<<< HEAD
 
         conclusion_text = None
 
@@ -380,6 +428,23 @@ class App(tk.Tk):
             conclusion_text = "No fue posible llegar a una conclusión."
 
         if "APTO" in conclusion_text:
+=======
+        engine.declare(Alumno(
+            nombre=nombre,
+            porcentaje_creditos=creditos,
+            induccion=induccion,
+            lugar_valido=lugar,
+            semestre=semestre,
+            institucion_publica=institucion_publica,
+            actividad_valida=actividad_valida,
+        ))
+        engine.run()
+
+        _, conclusion = engine.get_fact(Conclusion)
+        conclusion_text = conclusion["text"] if conclusion else "No fue posible llegar a una conclusión."
+
+        if "APROBADO" in conclusion_text:
+>>>>>>> 1f07aa5bcac2c8f3fa86ff018600598da850abac
             self._show("success", f"¡{nombre}, eres elegible!", conclusion_text)
         elif any(k in conclusion_text for k in ("RECHAZO", "PROHIBIDO", "REQUISITO")):
             self._show("error", "No elegible", conclusion_text)
@@ -428,8 +493,16 @@ class App(tk.Tk):
         self.creditos_obtenidos_entry.delete(0, tk.END)
         self.creditos_obtenidos_entry.insert(0, "200")
         self._calc_percentage()
+<<<<<<< HEAD
         self.induccion_var.set("si")
         self.lugar_var.set("si")
+=======
+        self.semestre_var.set(6)
+        self.induccion_var.set("si")
+        self.lugar_var.set("si")
+        self.institucion_publica_var.set("si")
+        self.actividad_valida_var.set("si")
+>>>>>>> 1f07aa5bcac2c8f3fa86ff018600598da850abac
         self._result_outer.pack_forget()
 
 
